@@ -1,0 +1,304 @@
+[GasDynam]
+McNum=0
+ShowGasErrors=1
+InterfaceDiag=1
+InterfaceCorr=1
+MaxBTypes=200
+MaxSpecies=2
+GasGamma(01)=1.4
+GasMolWt(01)=28.97
+GasGamma(02)=1.4
+GasMolWt(02)=28.97
+CFLnum=0.9
+
+[GridRefinement]
+MinLevel=0
+MaxLevel=3
+UThrshld=0.1
+LThrshld=0.04
+FilterNo=0.7
+ShockThk=1
+MaxNodes=1000000
+MaxBlocks=10
+MaxCorners=20
+GridAdaptDiag=1
+
+[Paths]
+FileToOpen=D:\McGill_MSc Thesis\research_MSc_Mcgill\files\Concave\Simulations\Acc_method\Minf_8_200_IoS_0.15\M3_SL0.6_50POINT_AR0.526_M2_2.4056_Sa_26.1922.2c
+FolderDXX=D:\McGill_MSc Thesis\research_MSc_Mcgill\files\Concave\Simulations\Acc_method\Minf_8_200_IoS_0.15
+FolderBMP=D:\McGill_MSc Thesis\research_MSc_Mcgill\files\Concave\Simulations\Acc_method\Minf_8_200_IoS_0.15
+DitherExe=c:\Program Files\CFD Solver\System32\Dither.exe
+Bmp2GifExe=c:\Program Files\CFD Solver\System32\Bmp2Gif.exe
+'//AutoSaveBndFile=C:\Users\NOTEBOOK\Desktop\files\Concave\Simulations\Minf_3_50P - Acceleration trial\Boundary.txt
+ModelName=Minf_8_200_IoS_0.15
+ModelDescription=Curved shock using CustomBoundaryCondition
+'//AutoSaveBndFile=C:\Users\NOTEBOOK\Desktop\files\Concave\Simulations\Minf_3_50P - Acceleration trial\Boundary.txt
+AutoSaveBndFile=D:\McGill_MSc Thesis\research_MSc_Mcgill\files\Concave\Simulations\Acc_method\Minf_8_200_IoS_0.15\Boundary.txt
+
+[AutoSave]
+AutoSaveBMP=-1
+AutoSaveDXX=50000
+AutoSaveBMPEnabled=0
+AutoSaveDXXEnabled=0
+AutoSaveBMPType=6
+AutoSaveBnd(1000)=0
+AutoSaveRSD=100
+AutoSaveRSDEnabled=0
+AutoSaveBnd(0005)=0
+AutoSaveBnd(0006)=0
+AutoSaveMaxIsoVal=1
+AutoSaveMinIsoVal=0
+AutoSaveNumIsolines=11
+AutoSaveBnd(0001)=0
+AutoSaveBndType=0
+AutoSaveBMPX1=0
+AutoSaveBMPX2=0
+AutoSaveBMPY1=0
+AutoSaveBMPY2=0
+AutoSaveBMPWidth=640
+AutoSaveBMPHeight=480
+
+[Axial]
+Axial=1
+
+[PreDefinedSwitches]
+PDSInitGasCase=0
+PDSRiemann=1
+PDSSchemeRBT=0
+PDSSchemePAV=1
+PDSSchemeBT7=1
+PDSLTS=0
+PDSGovEqns=1
+
+'//[BodyForces]
+'//a_x=0
+'//a_y=0
+
+[Slider]
+SliderVisible=0
+SliderOrientation=0
+SliderMinVal=0
+SliderMaxVal=10
+SliderFunction=4
+
+[Scales]
+r_sc=1.225
+p_sc=101325
+L_sc=1
+Rgas_sc=8314
+u_sc=sqrt(p_sc/r_sc)
+t_sc=L_sc/u_sc
+a_sc=L_sc/t_sc^2
+
+
+
+[BodyForces]
+a_x=0.863
+a_y=0
+
+
+
+[InitialConditionsAtInfinity]
+rInf(BC.Dirichlet(1))=1
+pInf(BC.Dirichlet(1))=1
+UxInf(BC.Dirichlet(1))=McNum*sqrt(GasGamma(01))
+UyInf(BC.Dirichlet(1))=0
+rtinf(1,BC.Dirichlet(1))=1
+
+
+
+[BoundaryDefinitions]
+BndType(0001)=BC.Axis
+BndType(0002)=BC.Dirichlet(1)
+BndType(0003)=BC.Wall
+BndType(0004)=BC.Wall
+BndType(0005)=BC.Wall
+BndType(0006)=BC.Dirichlet(1)
+BndType(0007)=BC.Wall
+BndType(0008)=BC.Dirichlet(1)
+BndType(0009)=BC.Dirichlet(1)
+BndType(0010)=BC.Axis
+BndType(0011)=BC.Axis
+BndType(0012)=BC.Invisible
+BndType(0013)=BC.Invisible
+BndType(0014)=BC.Invisible
+BndType(0015)=BC.Invisible
+BndType(0016)=BC.Invisible
+
+[ParsingProcess]
+StartProcessing=0
+StopProcessing=10000000
+MaxParserPasses=1
+
+[Parser]
+Option Explicit
+Private Done
+Done = True
+dim tbar, xbar, i, nd, j
+
+  if (0<1 and Done=False) then
+    Call Post_Proc
+  end if
+  Done = True
+'//Dim i
+Call MyDefineAMRRegions()
+
+Public Sub PreTimeStep1() 
+  If (ntime = 1 or ntime Mod 25 = 0) Then
+    Call xt_data
+  End If
+End Sub
+
+Public Sub PreTimeStep2()
+End Sub
+
+Public Sub PreTimeStep3()
+End Sub
+
+Public Sub PreTimeStep4()
+End Sub
+
+
+Public Sub PostTimeStep()
+'// '// '// increase the M slitely
+
+
+Dim dM, M2
+
+  M2 = 8
+  
+  If (0 < ntime) Then
+
+    dM = a_x*dt/sqr(GasGamma(01))
+
+    If ((McNum+dM/2)<M2) Then
+      McNum = McNum + dM
+    ElseIf (-1<>BndType(40)) Then
+      McNum = M2 
+      '// PrintValues rtime*l_sc/sqr(p_sc/r_sc)
+      BndType(40)=-1
+      a_x  = 0
+    End If
+   UxInf(01)=McNum*sqr(GasGamma(01)*pinf(01)/rinf(01))
+ End If
+
+End Sub
+
+
+Public Sub InitialConditions()
+  If (1) Then '// for easy swithcing off
+   Call MyInitialConditions()
+  End If 
+End Sub
+
+Private Sub MyDefineAMRRegions
+  With AMRRegion(2)
+    .MaxLevel = 3
+    .MinLevel = 0
+    .UThrshld = 0.1
+    .LThrshld = 0.04
+    .FilterNo = 0.7
+  End With
+
+
+
+  Call MyAMRRegionsTest
+End Sub
+
+Private Sub MyAMRRegionsTest
+  Dim i, nd
+
+  For i=1 To lptvac
+    nd = lstvac(i)
+
+    If (2 <> AMRRegion_Nd(nd)) Then
+      If (ynode(nd)<1.05) Then
+        AMRRegion_Nd(nd) = 2
+      End If
+'//    Else
+'//	AMRRegion_Nd(i) = 3
+   End If
+
+  Next
+End Sub
+
+
+
+
+
+
+
+Private Sub MyInitialConditions()
+  Dim region, i, j, ThisMaxLevel, nd
+
+  ThisMaxLevel = MinLevel  - 1
+  Do WHILE (ThisMaxLevel < MaxLevel)
+    ThisMaxLevel = ThisMaxLevel + 1
+    
+    For i = 1 To lPtVac     
+      nd = lstvac(i)
+
+
+
+      r (nd) = rinf (1)          
+      ux(nd) = uxinf(1)   
+      uy(nd) = uyinf(1)
+      p (nd) = pinf (1)        
+      For j=1 To MaxSpecies - 1          
+        rt(j, nd) = rtinf(j, 1)
+      Next
+      
+    Next           
+
+    If (AdaptGrid) Then
+      Call PrintValues("An error seems to have occurred during the initial grid adaptation stage.")
+    End If
+    
+  LOOP
+End Sub
+
+Private Sub Post_Proc
+
+Dim hndl_node, hndl_conn, ival, k, nd, bnd, blk, nbrs, Ma, lineout_node, lineout_conn
+Call CFileMan.DeleteFile("node_data.dat")
+Call CFileMan.DeleteFile("conn_data.dat")
+Set hndl_node=MyFileSysObj.OpenTextFile("node_data.dat", 8, TRUE, 0)
+Set hndl_conn=MyFileSysObj.OpenTextFile("conn_data.dat", 8, TRUE, 0)
+
+For ival=1 To lPtVac  
+  nd = lstvac(ival)
+  bnd=indatr(3,nd)
+  blk=indatr(5,nd)
+  Ma=sqrt(ux(nd)^2+uy(nd)^2)/sqrt(Gasgamma(01)*p(nd)/r(nd))
+  lineout_node= xnode(nd) & " , " & ynode(nd) & " , " & r(nd) & " , " & ux(nd) & " , " & uy(nd) & " , " & p(nd) & " , " & Ma & " , " & bnd & " , " & blk
+  Call hndl_node.WriteLine(lineout_node)
+  nbrs=indatr(1,nd)
+  lineout_conn=nd
+  For k=1 To nbrs
+    if ( nghbor(k,nd)>0 ) then
+      lineout_conn=lineout_conn & " " & nghbor(k,nd)
+    End if
+    Next
+    Call hndl_conn.WriteLine(lineout_conn)
+Next
+End Sub
+
+Private Sub xt_data
+
+Dim hndl_node, ival, k, nd, bnd, blk, nbrs, Ma, lineout_node
+Set hndl_node=MyFileSysObj.OpenTextFile("node_data.dat", 8, TRUE, 0)
+
+For ival=1 To lPtVac 
+  nd = lstvac(ival)
+  bnd=indatr(3,nd)
+  blk=indatr(5,nd)
+  if ( ynode(nd) = 0 ) then 
+    Ma=sqrt(ux(nd)^2+uy(nd)^2)/sqrt(Gasgamma(01)*p(nd)/r(nd))
+    lineout_node = xnode(nd) & " , " & ntime & " , " & r(nd) & " , " & ux(nd) & " , " & ynode(nd) & " , " & p(nd) & " , " & Ma & " , " & bnd & " , " & blk
+    Call hndl_node.WriteLine(lineout_node)
+  End if
+Next
+End Sub
+
+
+
